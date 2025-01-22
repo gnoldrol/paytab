@@ -1,0 +1,58 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import '../../../../core/network/api_constants.dart';
+import '../../../../core/error/exceptions.dart';
+
+abstract class CurrencyRemoteDataSource {
+  Future<Map<String, String>> getSymbols();
+  Future<double> getExchangeRate(String from, String to);
+}
+
+class CurrencyRemoteDataSourceImpl implements CurrencyRemoteDataSource {
+  final http.Client client;
+
+  CurrencyRemoteDataSourceImpl({required this.client});
+
+  @override
+  Future<Map<String, String>> getSymbols() async {
+    final response = await client.get(
+      Uri.parse('${ApiConstants.baseUrl}/symbols?access_key=${ApiConstants.accessKey}')
+    );
+
+    print('Symbols Response Status: ${response.statusCode}');
+    print('Symbols Response Body: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> jsonResponse = json.decode(response.body);
+      print('Parsed JSON: $jsonResponse');
+      
+      if (jsonResponse['success'] == true) {
+        final Map<String, dynamic> symbols = jsonResponse['symbols'];
+        return Map<String, String>.from(symbols);
+      } else {
+        print('API Error: ${jsonResponse['error']}');
+        throw ServerException();
+      }
+    } else {
+      throw ServerException();
+    }
+  }
+
+  @override
+  Future<double> getExchangeRate(String from, String to) async {
+    final response = await client.get(
+      Uri.parse('${ApiConstants.baseUrl}/latest?access_key=${ApiConstants.accessKey}&base=$from&symbols=$to')
+    );
+
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> jsonResponse = json.decode(response.body);
+      if (jsonResponse['success'] == true) {
+        return jsonResponse['rates'][to].toDouble();
+      } else {
+        throw ServerException();
+      }
+    } else {
+      throw ServerException();
+    }
+  }
+} 
