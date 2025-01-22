@@ -1,12 +1,10 @@
 class ApiError {
   final int code;
   final String type;
-  final String info;
 
   ApiError({
     required this.code,
     required this.type,
-    required this.info,
   });
 
   factory ApiError.fromJson(Map<String, dynamic> json) {
@@ -14,7 +12,6 @@ class ApiError {
     return ApiError(
       code: json['code'] ?? 0, // Ensure code is an int
       type: json['type'] ?? '',
-      info: json['info'] ?? '',
     );
   }
 
@@ -23,7 +20,7 @@ class ApiError {
       case 105:
         return 'Base Currency Access Restricted, Please Upgrade your subscription';
       default:
-        return info.isEmpty ? type : info;
+        return "Fixer API Error: $type";
     }
   }
 } 

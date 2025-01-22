@@ -5,6 +5,7 @@ import '../bloc/currency_bloc.dart';
 import '../bloc/currency_event.dart';
 import '../bloc/currency_state.dart';
 import '../../data/models/exchange_history_model.dart';
+import '../../../../core/error/custom_errors.dart';
 import 'dart:async';
 import 'exchange_history_screen.dart';
 
@@ -29,28 +30,11 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
     _loadSymbols();
   }
 
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red,
-        duration: const Duration(seconds: 3),
-        action: SnackBarAction(
-          label: 'Dismiss',
-          textColor: Colors.white,
-          onPressed: () {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          },
-        ),
-      ),
-    );
-  }
-
-  void _showErrorDialog(String message) {
+  void _showErrorDialog(String title, String message) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Error'),
+        title: Text(title),
         content: Text(message),
         actions: [
           TextButton(
@@ -67,7 +51,15 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
       final result = await context.read<CurrencyBloc>().repository.getSymbols();
       result.fold(
         (failure) {
-          _showError(failure.message);
+          String title = 'Error';
+          if (failure is ConnectivityError) {
+            title = 'Connection Error';
+          } else if (failure is ApiError) {
+            title = 'API Error';
+          } else {
+            title = 'Unexpected Error';
+          }
+          _showErrorDialog(title, failure.message);
           setState(() => _isLoading = false);
         },
         (symbols) {
@@ -81,7 +73,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
         },
       );
     } catch (e) {
-      _showError('Network error occurred');
+      _showErrorDialog('Network Error', 'Failed to connect to the server');
       setState(() => _isLoading = false);
     }
   }
@@ -124,13 +116,22 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
     return BlocConsumer<CurrencyBloc, CurrencyState>(
       listener: (context, state) async {
         if (state is CurrencyError) {
-          // Extract and format the error type
-          final errorType = state.message.split(':').last.trim().replaceAll('_', ' ');
-          _showError(errorType);
+          String title;
+          String message = state.message;
+          
+          if (message.startsWith('Connection Error')) {
+            title = 'Connection Error';
+            message = message.replaceFirst('Connection Error: ', '');
+          } else if (message.startsWith('Unexpected error')) {
+            title = 'Error';
+          } else {
+            title = 'API Error';
+          }
+          
+          _showErrorDialog(title, message);
         } else if (state is CurrencyLoaded) {
           Box<ExchangeHistoryModel>? box;
           try {
-            // Save to Hive when conversion is successful
             box = await Hive.openBox<ExchangeHistoryModel>('exchange_history');
             final amount = double.tryParse(_amountController.text);
             if (amount == null) {
@@ -157,7 +158,7 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
           } catch (e, stackTrace) {
             debugPrint('Error saving to Hive: $e');
             debugPrint('Stack trace: $stackTrace');
-            _showError('Failed to save conversion history');
+            _showErrorDialog('Storage Error', 'Failed to save conversion history');
           } finally {
             await box?.close();
           }
