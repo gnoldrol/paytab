@@ -12,7 +12,7 @@ class ApiError {
   factory ApiError.fromJson(Map<String, dynamic> json) {
     print('Parsing API Error: $json'); // Debug print
     return ApiError(
-      code: json['code'] ?? 0,
+      code: json['code'] ?? 0, // Ensure code is an int
       type: json['type'] ?? '',
       info: json['info'] ?? '',
     );

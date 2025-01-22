@@ -105,14 +105,6 @@ class _ExchangeHistoryScreenState extends State<ExchangeHistoryScreen> {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: () async {
-              await _box?.clear();
-            },
-          ),
-        ],
       ),
       body: ValueListenableBuilder(
         valueListenable: _box!.listenable(),

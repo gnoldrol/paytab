@@ -67,14 +67,14 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
       final result = await context.read<CurrencyBloc>().repository.getSymbols();
       result.fold(
         (failure) {
-          _showError('Failed to load currencies');
+          _showError(failure.message);
           setState(() => _isLoading = false);
         },
         (symbols) {
           setState(() {
             _symbols = symbols;
-            _fromCurrency = symbols.keys.first;
-            _toCurrency = symbols.keys.elementAt(1);
+            _fromCurrency = symbols.containsKey('EUR') ? 'EUR' : symbols.keys.first;
+            _toCurrency = symbols.keys.firstWhere((key) => key != _fromCurrency, orElse: () => symbols.keys.elementAt(1));
             _isLoading = false;
             _convertCurrency();
           });
@@ -124,11 +124,9 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
     return BlocConsumer<CurrencyBloc, CurrencyState>(
       listener: (context, state) async {
         if (state is CurrencyError) {
-          if (state.message.contains('Base Currency Access Restricted')) {
-            _showErrorDialog(state.message);
-          } else {
-            _showError(state.message);
-          }
+          // Extract and format the error type
+          final errorType = state.message.split(':').last.trim().replaceAll('_', ' ');
+          _showError(errorType);
         } else if (state is CurrencyLoaded) {
           Box<ExchangeHistoryModel>? box;
           try {
@@ -201,10 +199,6 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
       appBar: AppBar(
         title: const Text('Currency Exchange'),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: _convertCurrency,
-          ),
           IconButton(
             icon: const Icon(Icons.history),
             onPressed: () {

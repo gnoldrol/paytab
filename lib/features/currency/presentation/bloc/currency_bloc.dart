@@ -1,3 +1,4 @@
+import '../../data/models/api_error.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../domain/repositories/currency_repository.dart';
 import 'currency_event.dart';
@@ -23,7 +24,13 @@ class CurrencyBloc extends Bloc<CurrencyEvent, CurrencyState> {
     );
 
     result.fold(
-      (failure) => emit(const CurrencyError('Failed to convert currency')),
+      (failure) {
+        if (failure is ApiError) {
+          emit(CurrencyError(failure.message));
+        } else {
+          emit(const CurrencyError('Failed to convert currency'));
+        }
+      },
       (convertedAmount) => emit(CurrencyLoaded(convertedAmount)),
     );
   }
