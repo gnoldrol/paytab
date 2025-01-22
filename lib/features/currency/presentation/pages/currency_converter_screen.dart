@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import '../bloc/currency_bloc.dart';
 import '../bloc/currency_event.dart';
 import '../bloc/currency_state.dart';
+import '../../data/models/exchange_history_model.dart';
 import 'dart:async';
 import 'exchange_history_screen.dart';
 
@@ -120,12 +122,46 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
 
   Widget _buildResultField() {
     return BlocConsumer<CurrencyBloc, CurrencyState>(
-      listener: (context, state) {
+      listener: (context, state) async {
         if (state is CurrencyError) {
           if (state.message.contains('Base Currency Access Restricted')) {
             _showErrorDialog(state.message);
           } else {
             _showError(state.message);
+          }
+        } else if (state is CurrencyLoaded) {
+          Box<ExchangeHistoryModel>? box;
+          try {
+            // Save to Hive when conversion is successful
+            box = await Hive.openBox<ExchangeHistoryModel>('exchange_history');
+            final amount = double.tryParse(_amountController.text);
+            if (amount == null) {
+              debugPrint('Error: Invalid amount ${_amountController.text}');
+              return;
+            }
+            
+            final historyEntry = ExchangeHistoryModel(
+              fromAmount: amount,
+              fromCurrency: _fromCurrency!,
+              toCurrency: _toCurrency!,
+              toAmount: state.result,
+              timestamp: DateTime.now(),
+            );
+            
+            debugPrint('Saving entry: timestamp=${historyEntry.timestamp}, '
+                'fromAmount=${historyEntry.fromAmount}, '
+                'fromCurrency=${historyEntry.fromCurrency}, '
+                'toCurrency=${historyEntry.toCurrency}, '
+                'toAmount=${historyEntry.toAmount}');
+                
+            await box.add(historyEntry);
+            debugPrint('Successfully saved entry to Hive');
+          } catch (e, stackTrace) {
+            debugPrint('Error saving to Hive: $e');
+            debugPrint('Stack trace: $stackTrace');
+            _showError('Failed to save conversion history');
+          } finally {
+            await box?.close();
           }
         }
       },
