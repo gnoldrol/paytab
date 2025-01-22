@@ -4,6 +4,7 @@ import '../bloc/currency_bloc.dart';
 import '../bloc/currency_event.dart';
 import '../bloc/currency_state.dart';
 import 'dart:async';
+import 'exchange_history_screen.dart';
 
 class CurrencyConverterScreen extends StatefulWidget {
   const CurrencyConverterScreen({super.key});
@@ -39,6 +40,22 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
             ScaffoldMessenger.of(context).hideCurrentSnackBar();
           },
         ),
+      ),
+    );
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Error'),
+        content: Text(message),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('OK'),
+          ),
+        ],
       ),
     );
   }
@@ -105,7 +122,11 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
     return BlocConsumer<CurrencyBloc, CurrencyState>(
       listener: (context, state) {
         if (state is CurrencyError) {
-          _showError(state.message);
+          if (state.message.contains('Base Currency Access Restricted')) {
+            _showErrorDialog(state.message);
+          } else {
+            _showError(state.message);
+          }
         }
       },
       builder: (context, state) {
@@ -147,6 +168,17 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: _convertCurrency,
+          ),
+          IconButton(
+            icon: const Icon(Icons.history),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const ExchangeHistoryScreen(),
+                ),
+              );
+            },
           ),
         ],
       ),

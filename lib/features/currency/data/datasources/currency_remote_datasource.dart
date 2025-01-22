@@ -45,23 +45,16 @@ class CurrencyRemoteDataSourceImpl implements CurrencyRemoteDataSource {
       Uri.parse('${ApiConstants.baseUrl}/latest?access_key=${ApiConstants.accessKey}&base=$from&symbols=$to')
     );
 
-    print('Exchange Rate Response Status: ${response.statusCode}');
-    print('Exchange Rate Response Body: ${response.body}');
-
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> jsonResponse = json.decode(response.body);
-      print('Parsed Exchange Rate JSON: $jsonResponse');
-      
-      if (jsonResponse['success'] == true) {
-        final rate = jsonResponse['rates'][to].toDouble();
-        print('Exchange Rate $from to $to: $rate');
-        return rate;
-      } else {
-        final error = ApiError.fromJson(jsonResponse['error']);
-        throw ServerException(error.message);
-      }
+    print('Exchange Rate Response: ${response.body}');
+    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    
+    if (jsonResponse['success'] == true) {
+      final rate = jsonResponse['rates'][to].toDouble();
+      return rate;
     } else {
-      throw ServerException('Server error occurred');
+      final error = ApiError.fromJson(jsonResponse['error']);
+      print('API Error: ${error.message}'); // Debug print
+      throw ServerException(error.message);
     }
   }
 } 

@@ -10,10 +10,11 @@ class ApiError {
   });
 
   factory ApiError.fromJson(Map<String, dynamic> json) {
+    print('Parsing API Error: $json'); // Debug print
     return ApiError(
-      code: json['code'],
-      type: json['type'],
-      info: json['info'],
+      code: json['code'] ?? 0,
+      type: json['type'] ?? '',
+      info: json['info'] ?? '',
     );
   }
 
@@ -22,7 +23,7 @@ class ApiError {
       case 105:
         return 'Base Currency Access Restricted, Please Upgrade your subscription';
       default:
-        return info;
+        return info.isEmpty ? type : info;
     }
   }
 } 
