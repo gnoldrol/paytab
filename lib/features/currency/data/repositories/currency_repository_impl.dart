@@ -31,10 +31,10 @@ class CurrencyRepositoryImpl implements CurrencyRepository {
       final rate = await remoteDataSource.getExchangeRate(fromCurrency, toCurrency);
       final result = amount * rate;
       return Right(result);
-    } on ServerException {
-      return Left(ServerFailure());
+    } on ServerException catch (e) {
+      return Left(ServerFailure(e.message));
     } catch (e) {
-      return Left(ServerFailure());
+      return Left(ServerFailure('An unexpected error occurred'));
     }
   }
 } 
