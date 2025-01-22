@@ -92,6 +92,15 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
     });
   }
 
+  void _switchCurrencies() {
+    setState(() {
+      final temp = _fromCurrency;
+      _fromCurrency = _toCurrency;
+      _toCurrency = temp;
+    });
+    _convertCurrency();
+  }
+
   Widget _buildResultField() {
     return BlocConsumer<CurrencyBloc, CurrencyState>(
       listener: (context, state) {
@@ -185,10 +194,13 @@ class _CurrencyConverterScreenState extends State<CurrencyConverterScreen> {
               ],
             ),
             const SizedBox(height: 32),
-            const Center(
-              child: CircleAvatar(
-                radius: 25,
-                child: Icon(Icons.currency_exchange, size: 30),
+            Center(
+              child: IconButton(
+                onPressed: _switchCurrencies,
+                icon: const CircleAvatar(
+                  radius: 25,
+                  child: Icon(Icons.currency_exchange, size: 30),
+                ),
               ),
             ),
             const SizedBox(height: 32),
