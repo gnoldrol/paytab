@@ -38,7 +38,7 @@ The application is built using Clean Architecture principles with the following 
 
 1. Clone the repository:
 ```bash
-git clone [[repository-url]](https://github.com/gnoldrol/paytab.git)
+git clone https://github.com/gnoldrol/paytab.git
 ```
 
 2. Install dependencies:
