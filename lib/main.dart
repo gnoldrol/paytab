@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'features/currency/presentation/bloc/currency_bloc.dart';
 import 'features/currency/data/repositories/currency_repository_impl.dart';
@@ -46,7 +46,7 @@ class MyApp extends StatelessWidget {
         create: (context) => CurrencyBloc(
           repository: CurrencyRepositoryImpl(
             remoteDataSource: CurrencyRemoteDataSourceImpl(
-              client: http.Client(),
+              dio: Dio(),
             ),
           ),
         ),

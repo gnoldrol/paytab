@@ -21,7 +21,6 @@ class ExchangeHistoryModelAdapter extends TypeAdapter<ExchangeHistoryModel> {
       fromCurrency: fields[1] as String,
       toCurrency: fields[2] as String,
       toAmount: fields[3] as double,
-      timestamp: DateTime.fromMillisecondsSinceEpoch(fields[4] as int),
     );
   }
 

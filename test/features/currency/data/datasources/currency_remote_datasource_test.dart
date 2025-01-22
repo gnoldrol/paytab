@@ -2,21 +2,21 @@ import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mockito/annotations.dart';
 import 'package:mockito/mockito.dart';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import 'package:pay_tab/core/error/exceptions.dart';
 import 'package:pay_tab/core/network/api_constants.dart';
 import 'package:pay_tab/features/currency/data/datasources/currency_remote_datasource.dart';
 
 import 'currency_remote_datasource_test.mocks.dart';
 
-@GenerateMocks([http.Client])
+@GenerateMocks([Dio])
 void main() {
   late CurrencyRemoteDataSourceImpl dataSource;
-  late MockClient mockHttpClient;
+  late MockDio mockDio;
 
   setUp(() {
-    mockHttpClient = MockClient();
-    dataSource = CurrencyRemoteDataSourceImpl(client: mockHttpClient);
+    mockDio = MockDio();
+    dataSource = CurrencyRemoteDataSourceImpl(dio: mockDio);
   });
 
   group('getSymbols', () {
@@ -32,8 +32,12 @@ void main() {
       'should return currency symbols when the response is successful',
       () async {
         // arrange
-        when(mockHttpClient.get(any)).thenAnswer(
-          (_) async => http.Response(json.encode(tSymbolsResponse), 200),
+        when(mockDio.get(any, queryParameters: anyNamed('queryParameters'))).thenAnswer(
+          (_) async => Response(
+            data: tSymbolsResponse,
+            statusCode: 200,
+            requestOptions: RequestOptions(path: ''),
+          ),
         );
 
         // act
@@ -44,8 +48,9 @@ void main() {
           'USD': 'United States Dollar',
           'EGP': 'Egyptian Pound'
         });
-        verify(mockHttpClient.get(
-          Uri.parse('${ApiConstants.baseUrl}/symbols?access_key=${ApiConstants.accessKey}'),
+        verify(mockDio.get(
+          '${ApiConstants.baseUrl}/symbols',
+          queryParameters: {'access_key': ApiConstants.accessKey},
         ));
       },
     );
@@ -54,8 +59,12 @@ void main() {
       'should throw ServerException when the response is unsuccessful',
       () async {
         // arrange
-        when(mockHttpClient.get(any)).thenAnswer(
-          (_) async => http.Response('Something went wrong', 404),
+        when(mockDio.get(any, queryParameters: anyNamed('queryParameters'))).thenAnswer(
+          (_) async => Response(
+            data: 'Something went wrong',
+            statusCode: 404,
+            requestOptions: RequestOptions(path: ''),
+          ),
         );
 
         // act
@@ -79,8 +88,12 @@ void main() {
       'should return exchange rate when the response is successful',
       () async {
         // arrange
-        when(mockHttpClient.get(any)).thenAnswer(
-          (_) async => http.Response(json.encode(tExchangeResponse), 200),
+        when(mockDio.get(any, queryParameters: anyNamed('queryParameters'))).thenAnswer(
+          (_) async => Response(
+            data: tExchangeResponse,
+            statusCode: 200,
+            requestOptions: RequestOptions(path: ''),
+          ),
         );
 
         // act
@@ -88,8 +101,9 @@ void main() {
 
         // assert
         expect(result, 30.90);
-        verify(mockHttpClient.get(
-          Uri.parse('${ApiConstants.baseUrl}/latest?access_key=${ApiConstants.accessKey}&base=USD&symbols=EGP'),
+        verify(mockDio.get(
+          '${ApiConstants.baseUrl}/latest',
+          queryParameters: {'access_key': ApiConstants.accessKey, 'base': 'USD', 'symbols': 'EGP'},
         ));
       },
     );
@@ -98,8 +112,12 @@ void main() {
       'should throw ServerException when the response is unsuccessful',
       () async {
         // arrange
-        when(mockHttpClient.get(any)).thenAnswer(
-          (_) async => http.Response('Something went wrong', 404),
+        when(mockDio.get(any, queryParameters: anyNamed('queryParameters'))).thenAnswer(
+          (_) async => Response(
+            data: {'success': false, 'error': {'code': 105, 'type': 'base_currency_access_restricted'}},
+            statusCode: 200,
+            requestOptions: RequestOptions(path: ''),
+          ),
         );
 
         // act

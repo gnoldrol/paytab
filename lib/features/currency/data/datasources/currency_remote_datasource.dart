@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:dio/dio.dart';
 import '../../../../core/network/api_constants.dart';
 import '../../../../core/error/exceptions.dart';
 import '../../../../features/currency/data/models/api_error.dart';
@@ -10,21 +10,22 @@ abstract class CurrencyRemoteDataSource {
 }
 
 class CurrencyRemoteDataSourceImpl implements CurrencyRemoteDataSource {
-  final http.Client client;
+  final Dio dio;
 
-  CurrencyRemoteDataSourceImpl({required this.client});
+  CurrencyRemoteDataSourceImpl({required this.dio});
 
   @override
   Future<Map<String, String>> getSymbols() async {
-    final response = await client.get(
-      Uri.parse('${ApiConstants.baseUrl}/symbols?access_key=${ApiConstants.accessKey}')
+    final response = await dio.get(
+      '${ApiConstants.baseUrl}/symbols',
+      queryParameters: {'access_key': ApiConstants.accessKey},
     );
 
     print('Symbols Response Status: ${response.statusCode}');
-    print('Symbols Response Body: ${response.body}');
+    print('Symbols Response Body: ${response.data}');
 
     if (response.statusCode == 200) {
-      final Map<String, dynamic> jsonResponse = json.decode(response.body);
+      final Map<String, dynamic> jsonResponse = response.data;
       print('Parsed JSON: $jsonResponse');
       
       if (jsonResponse['success'] == true) {
@@ -41,12 +42,17 @@ class CurrencyRemoteDataSourceImpl implements CurrencyRemoteDataSource {
 
   @override
   Future<double> getExchangeRate(String from, String to) async {
-    final response = await client.get(
-      Uri.parse('${ApiConstants.baseUrl}/latest?access_key=${ApiConstants.accessKey}&base=$from&symbols=$to')
+    final response = await dio.get(
+      '${ApiConstants.baseUrl}/latest',
+      queryParameters: {
+        'access_key': ApiConstants.accessKey,
+        'base': from,
+        'symbols': to,
+      },
     );
 
-    print('Exchange Rate Response: ${response.body}');
-    final Map<String, dynamic> jsonResponse = json.decode(response.body);
+    print('Exchange Rate Response: ${response.data}');
+    final Map<String, dynamic> jsonResponse = response.data;
     
     if (jsonResponse['success'] == true) {
       final rate = jsonResponse['rates'][to].toDouble();
